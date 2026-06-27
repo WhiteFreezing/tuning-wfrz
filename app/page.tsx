@@ -10,8 +10,10 @@ export default function HomePage() {
       </h1>
       <p className="text-dim mt-4 text-lg max-w-2xl">
         Aikar's flags are nearly a decade old. They're still the right baseline for a 4 GB
-        Paper server on Java 11 — but on a 32 GB Forge server on Java 21, you're leaving
-        20–40% throughput on the table. This site documents what to actually use in 2026.
+        Paper server on Java 17 — but on a 32 GB server running Minecraft <strong>26.2</strong> on
+        Java <strong>25 LTS</strong>, you're leaving 20–40 % throughput on the table.
+        This site documents what to actually use in 2026 — including the year-based MC
+        versioning (after 1.21.11 came 26.1) and Mojang's bump to Java 25 baseline.
       </p>
 
       <div className="grid sm:grid-cols-2 gap-4 mt-10">

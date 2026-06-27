@@ -26,6 +26,8 @@ export default function Page() {
 
       <h2>The canonical low-memory recipe</h2>
       <pre><code>{`# Image: ghcr.io/whitefreezing/java:semeru-21
+# (Semeru 25 release was still rolling at the time of writing —
+#  use semeru-21 unless you specifically need MC 26.x compatibility.)
 java \\
   -Xms2G -Xmx2G \\
   -Xshareclasses \\
@@ -34,6 +36,12 @@ java \\
   -Xgcpolicy:gencon \\
   -Xgcthreads4 \\
   -jar paper.jar nogui`}</code></pre>
+      <p className="text-dim">
+        Note: Minecraft 26.x requires Java 25, which IBM Semeru reached later than
+        Adoptium. For 26.x servers under 4 GB heap, you may need to wait for Semeru 25
+        builds — or stay on the 1.21.x line for now where Java 21 (and OpenJ9 21) work
+        natively.
+      </p>
 
       <h3>What each flag does</h3>
       <ul>
