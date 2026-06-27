@@ -47,9 +47,12 @@ export default function Page() {
         At 16-core/32-thread CPUs that's free; on a 4-core VPS it might matter.
       </p>
       <p>
-        The big surprise of 2026 is <strong>compact object headers</strong>: a 3.5 GB
-        RSS saving (≈11 %) over the same workload on Java 21 ZGC. Real impact for
-        anyone packing servers tightly.
+        The 2026 free win is <strong>compact object headers</strong> (JEP 519 Product
+        in JDK 25): a 3.5 GB RSS saving (≈11 %) over the same workload on JDK 21 ZGC,
+        driven by the header shrinking from 96–128 bits down to 64 bits — roughly
+        4 bytes per object on average. Real impact for anyone packing servers tightly.
+        Note: still opt-in via <code>-XX:+UseCompactObjectHeaders</code> in JDK 25; in
+        JDK 24 it was experimental and required <code>-XX:+UnlockExperimentalVMOptions</code>.
       </p>
 
       <h2>When NOT to use ZGC</h2>
@@ -85,8 +88,8 @@ java -Xms32G -Xmx32G \\
 
       <p className="text-dim">
         Notice: no <code>-XX:+ZGenerational</code> on Java 25. It became the default in
-        Java 24 and the legacy single-gen path was removed in 25 — the flag is now a
-        no-op (and on some builds a deprecation warning).
+        JDK 23 (JEP 474) and the legacy single-gen path was removed in JDK 24 (JEP 490)
+        — the flag is now a no-op (and on some builds a deprecation warning).
       </p>
 
       <p className="not-prose mt-10">

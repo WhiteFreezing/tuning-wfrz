@@ -45,24 +45,28 @@ export default function Page() {
         Paper server it's still the right answer in 2026.
       </p>
 
-      <h2>What changed since 2017</h2>
+      <h2>What changed since 2017 (verified against Oracle migration docs)</h2>
       <ul>
-        <li><strong>ZGC went generational in Java 21</strong> (opt-in), <strong>became default in
-          Java 24</strong>, and <strong>the legacy single-gen ZGC was removed in Java 25</strong>.
-          Pauses are now consistently sub-millisecond at 64 GB+ heaps. G1 cannot match this
-          even at 16 GB.</li>
-        <li><strong>Shenandoah added generational mode</strong> in Java 21+. Similar profile
-          to G1 throughput-wise, dramatically better pause tail.</li>
-        <li><strong>Compact object headers (JEP 519)</strong> GA in Java 25 — 8 bytes off
-          every object. Real RAM win on entity-heavy modpacks and item-frame farms.</li>
-        <li><strong>Adaptive Heap Sizing</strong> in Java 24+. The <code>Xms = Xmx</code>
-          pattern still wins for latency, but AHS is fine if you want to set <code>Xms</code>
-          lower and let it grow.</li>
+        <li><strong>ZGC went generational</strong> as opt-in in <strong>JDK 21</strong>
+          (JEP 439), became <strong>default in JDK 23</strong> (JEP 474), and the
+          non-generational variant was <strong>removed entirely in JDK 24</strong>
+          (JEP 490). On JDK 24+ you no longer pass <code>-XX:+ZGenerational</code> —
+          it's the only mode that exists.</li>
+        <li><strong>Compact object headers</strong> — experimental in JDK 24 (JEP 450),
+          promoted to <strong>Product feature in JDK 25</strong> (JEP 519). Saves
+          about <strong>4 bytes per object on average</strong> (the header shrinks
+          from 96–128 bits to 64 bits). Still opt-in via
+          <code>-XX:+UseCompactObjectHeaders</code> — it's stable, just not yet
+          default-on while Oracle gathers field data.</li>
+        <li><strong>Shenandoah</strong> ships a generational mode behind
+          <code>-XX:ShenandoahGCMode=generational</code> in recent OpenJDK builds.
+          Production-readiness varies per vendor build — confirm with your runtime
+          before deploying.</li>
         <li><strong>OpenJ9 (Semeru)</strong> is still a real option for ≤4 GB hosts —
           uses 30–40 % less RSS than HotSpot for the same heap.</li>
         <li><strong>Modern CPUs</strong> have 16–64 cores. Aikar didn't tune
           <code>ParallelGCThreads</code> / <code>ConcGCThreads</code>; HotSpot's defaults
-          assume 4–8 cores and end up bottlenecked.</li>
+          assume 4–8 cores and end up bottlenecked on Ryzen 9 / Threadripper / Epyc.</li>
       </ul>
 
       <h2>The rule of thumb</h2>
@@ -72,17 +76,17 @@ export default function Page() {
           <tr><td>≤ 4 GB</td><td>17 – 25</td><td>OpenJ9 GenCon (Semeru) — lower RSS, no tuning needed</td></tr>
           <tr><td>4 – 12 GB</td><td>17 – 25</td><td>G1 + Aikar's flags (still optimal here)</td></tr>
           <tr><td>12 – 32 GB</td><td>17 only</td><td>G1 huge-heap variant (<code>G1NewSizePercent=40</code>)</td></tr>
-          <tr><td>12 – 32 GB</td><td>21 – 23</td><td>ZGC generational (opt-in via <code>-XX:+ZGenerational</code>)</td></tr>
-          <tr><td>12 – 32 GB</td><td>24 – 25</td><td>ZGC (generational is default; just <code>-XX:+UseZGC</code>)</td></tr>
+          <tr><td>12 – 32 GB</td><td>21 – 22</td><td>ZGC generational (opt-in via <code>-XX:+ZGenerational</code>)</td></tr>
+          <tr><td>12 – 32 GB</td><td>23</td><td>ZGC generational is default — flag redundant</td></tr>
+          <tr><td>12 – 32 GB</td><td>24 – 25</td><td>ZGC (only mode left; just <code>-XX:+UseZGC</code>)</td></tr>
           <tr><td>≥ 32 GB</td><td>21+</td><td>ZGC, full stop. G1 will choke.</td></tr>
-          <tr><td>any heap</td><td>25 only</td><td>add <code>-XX:+UseCompactObjectHeaders</code> on heaps ≥ 8 GB</td></tr>
+          <tr><td>≥ 8 GB</td><td>25</td><td>add <code>-XX:+UseCompactObjectHeaders</code> for ~4 B/obj RAM win</td></tr>
         </tbody>
       </table>
 
       <h2>Flag set for 32 GB / Java 25 / 26.x server</h2>
       <pre><code>{`java -Xms32G -Xmx32G \\
   -XX:+UseZGC \\
-  -XX:+UnlockExperimentalVMOptions \\
   -XX:ZAllocationSpikeTolerance=5 \\
   -XX:-ZUncommit \\
   -XX:+AlwaysPreTouch \\
@@ -95,10 +99,11 @@ export default function Page() {
   -XX:ConcGCThreads=6 \\
   -jar paper.jar nogui`}</code></pre>
       <p className="text-dim">
-        Notice what's <strong>missing</strong> vs Java 21 ZGC: no
-        <code>-XX:+ZGenerational</code>. It's the default in Java 24+, and using it on Java 25
-        is harmless but unnecessary — and if Oracle yanks the alias one day, your config
-        breaks for no reason.
+        Notice what's missing vs JDK 21 / 22 ZGC: no
+        <code>-XX:+ZGenerational</code> (the non-gen variant was removed in JDK 24, JEP 490)
+        and no <code>-XX:+UnlockExperimentalVMOptions</code> for compact headers
+        (promoted to Product in JEP 519 in JDK 25). On JDK 24 you'd still need the
+        Unlock flag because compact headers were experimental there (JEP 450).
       </p>
 
       <h2>What about Aikar's <code>-Daikars.new.flags=true</code>?</h2>
